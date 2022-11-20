@@ -78,7 +78,7 @@ is_open = merged['status'] == "Ouvert"
 opened = merged[is_open]
 opened["date"] = opened["date"].apply(lambda x: x.replace("&nbsp", " "))
 
-opened.to_csv("data/out.csv")
+#opened.to_csv("data/out.csv")
 
 txt = opened[["titre", "ville", "date", "modalite"]].to_markdown(showindex=False)
 #chunks = [txt[i:i+n] for i in range(0, len(txt), 1990)]
