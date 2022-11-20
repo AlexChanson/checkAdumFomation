@@ -3,5 +3,3 @@ pandas
 lxml
 discord-webhook
 tabulate
-bokeh
-selenium
