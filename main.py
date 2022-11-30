@@ -4,6 +4,44 @@ from urllib3 import encode_multipart_formdata
 import pandas as pd
 from discord_webhook import DiscordWebhook, DiscordEmbed
 
+
+def shorten(x, maxLen=75):
+    if len(x) <= maxLen:
+        return x
+    else:
+        return x[:maxLen-4] + " ..."
+
+
+short_month = {"janvier": "jan",
+               "fevrier": "fev",
+               "février": "fev",
+               "mars": "mar",
+               "avril": "avr",
+               "mai": "mai",
+               "juin": "jun",
+               "juillet": "jui",
+               "aout": "aou",
+               "août": "aou",
+               "septembre": "sep",
+               "octobre": "oct",
+               "novembre": "nov",
+               "decembre": "dec",
+               "décembre": "dec"}
+
+
+def format_date(d):
+    date = d.replace("&nbsp", " ").split(" ")
+    j = date[0]
+    m = date[1]
+    a = date[2]
+
+    if m.lower() in short_month.keys():
+        m = short_month[m.lower()]
+    else:
+        m = m[:3]
+
+    return j + " " + m + " " + a[2:]
+
 def chunkify(txt, limit=2000):
     chunks = []
     roll_over = ""
@@ -72,18 +110,13 @@ merged = merged[~((merged['modalite'].str.lower() == "présentiel") & (merged['v
 
 is_open = merged['status'].str.lower() == "ouvert"
 opened = merged[is_open]
-opened["date"] = opened["date"].apply(lambda x: x.replace("&nbsp", " "))
 
 opened = opened[~opened['titre'].str.contains("module master", case=False)]
 
-def shorten(x, maxLen=70):
-    if len(x) <= maxLen:
-        return x
-    else:
-        return x[:maxLen-4] + " ..."
-
+# Formatting
 opened["titre"] = opened["titre"].apply(shorten)
 opened["ville"] = opened["ville"].apply(lambda x: shorten(x, maxLen=14))
+opened["date"] = opened["date"].apply(format_date)
 
 #opened.to_csv("data/out.csv")
 
