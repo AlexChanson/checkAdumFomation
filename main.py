@@ -42,16 +42,12 @@ payload = {'action': "login", 'email':email,'password':password, "matFormation":
 boundary = '----WebKitFormBoundary' \
            + ''.join(random.sample(string.ascii_letters + string.digits, 16))
 body, header = encode_multipart_formdata(payload, boundary=boundary)
-#print(header)
-#print("-----------------------------")
-#print(str(body, encoding='utf-8'))
-#print("-----------------------------")
+
 
 s.headers.update({"Content-Type": header})
 
 postLogin = s.post("https://adum.fr/", data=body)
 print(postLogin.status_code, postLogin.headers)
-#print(postLogin.text)
 
 
 payload = {'action': "enterAccount|0"}
@@ -72,21 +68,32 @@ dfs = dfs[:-1]
 merged = pd.concat(dfs)
 merged.columns = ["titre", "ville", "date", "modalite", "status", "places"]
 
-merged = merged[~((merged['modalite'] == "Présentiel") & (merged['ville'] == "Orléans"))]
+merged = merged[~((merged['modalite'].str.lower() == "présentiel") & (merged['ville'].str.lower() == "orléans"))]
 
-is_open = merged['status'] == "Ouvert"
+is_open = merged['status'].str.lower() == "ouvert"
 opened = merged[is_open]
 opened["date"] = opened["date"].apply(lambda x: x.replace("&nbsp", " "))
+
+opened = opened[~opened['titre'].str.contains("module master", case=False)]
+
+def shorten(x, maxLen=70):
+    if len(x) <= maxLen:
+        return x
+    else:
+        return x[:maxLen-4] + " ..."
+
+opened["titre"] = opened["titre"].apply(shorten)
+opened["ville"] = opened["ville"].apply(lambda x: shorten(x, maxLen=14))
 
 #opened.to_csv("data/out.csv")
 
 txt = opened[["titre", "ville", "date", "modalite"]].to_markdown(showindex=False)
-#chunks = [txt[i:i+n] for i in range(0, len(txt), 1990)]
-chunks = chunkify(txt, 1999)
+chunks = chunkify(txt, 1990)
 
 for chunk in chunks:
-    webhook = DiscordWebhook(url=discord_url, content=chunk)
-    response = webhook.execute()
+    if len(chunk) > 0:
+        webhook = DiscordWebhook(url=discord_url, content="```"+chunk+"```")
+        response = webhook.execute()
 
 
 
